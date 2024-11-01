@@ -9,7 +9,16 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "baseUrl": "src",
+        "paths": {
+            "@config/*": [
+                "config/*"
+            ],
+            "@middleware/*": [
+                "middleware/*"
+            ]
+        }
     },
     "include": [
         "src/**/*"

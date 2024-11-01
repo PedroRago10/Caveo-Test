@@ -17,7 +17,11 @@ import { EditAccountRequestBody } from '../types/user';
  */
 export const getUserData = async (ctx: Context) => {
     try {
-        const { email, role } = ctx.state.user; // Extrai role e email do Cognito
+        if (!AppDataSource.isInitialized) {
+            await AppDataSource.initialize();
+        }
+
+        const { email, role } = ctx.state.user || {};
 
         if (!email) {
             ctx.status = 401;
@@ -25,9 +29,9 @@ export const getUserData = async (ctx: Context) => {
             return;
         }
 
-        // Busca os dados complementares no banco usando o email
         const userRepository = AppDataSource.getRepository(User);
         const user = await userRepository.findOne({ where: { email } });
+
 
         if (!user) {
             ctx.status = 404;
@@ -35,13 +39,12 @@ export const getUserData = async (ctx: Context) => {
             return;
         }
 
-        // Combina os dados do Cognito e do banco de dados
         ctx.status = 200;
         ctx.body = {
             id: user.id,
             name: user.name,
-            email: email,  // Retorna o email direto do Cognito para consistência
-            role: role,    // Role vindo do Cognito
+            email,
+            role,
             isOnboarded: user.isOnboarded,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
@@ -53,6 +56,7 @@ export const getUserData = async (ctx: Context) => {
         console.error('Erro ao obter dados do usuário:', error);
     }
 };
+
 
 /**
  * Update Cognito User Role

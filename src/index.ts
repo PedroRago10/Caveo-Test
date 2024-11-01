@@ -6,6 +6,7 @@ import cors from '@koa/cors';
 import { AppDataSource } from './config/database';
 import authRouter from './routes/authRoutes';
 import userRouter from './routes/userRoutes';
+import http from 'http';
 
 const app = new Koa();
 const router = new Router();
@@ -21,32 +22,32 @@ const router = new Router();
 async function startServer() {
     try {
         await AppDataSource.initialize();
-        console.log("Successfully connected to the database");
+        console.log("Conexão com o banco de dados estabelecida com sucesso");
 
         app.use(cors());
         app.use(bodyParser());
 
-        // Register routes for authentication and user management
         app.use(authRouter.routes()).use(authRouter.allowedMethods());
         app.use(userRouter.routes()).use(userRouter.allowedMethods());
 
-        // Health check route
         router.get('/', async (ctx) => {
-            ctx.body = 'Server is up and running!';
+            ctx.body = 'Server is up and running';
         });
 
         app.use(router.routes()).use(router.allowedMethods());
 
-        const PORT = process.env.PORT || 4000;
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
     } catch (error) {
-        console.error("Error connecting to the database:", error);
+        console.error("Erro ao conectar ao banco de dados:", error);
         process.exit(1);
     }
 }
 
 startServer();
 
-export default app;
+const server = http.createServer(app.callback());
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+export default server;
