@@ -1,0 +1,53 @@
+# Node.js
+node_modules/
+dist/
+build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.env
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+logs/*.log
+logs/**/*.log
+logs/combined.log
+
+# Database
+*.sqlite
+*.db
+
+# TypeORM
+.ormconfig.js
+.ormconfig.json
+migration/
+
+# Docker
+docker-compose.override.yml
+docker-compose.*
+.dockerignore
+
+# AWS / Sensitive Config
+.aws/
+*.pem
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# MacOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
