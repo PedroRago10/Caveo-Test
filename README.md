@@ -153,7 +153,9 @@ O projeto segue uma arquitetura modular com separação de responsabilidades par
 
 ## Estrutura de Testes
 
-- **Jest** para testes unitários e de integração.
+- **/tests/config** Testes de configuração.
+- **/tests/controllers**  Testes de controladores.
+- **/tests/middlewares** Testes de middleware.
 
 ### Comandos de Testes
 
@@ -161,5 +163,104 @@ O projeto segue uma arquitetura modular com separação de responsabilidades par
    ```bash
    npm run test
    ```
+
+
+# Documentação com Postman
+
+Para facilitar o entendimento e o teste das rotas da API, foi criada uma coleção no Postman chamada `Caveo Collections.postman_collection.json`. Essa coleção está localizada na pasta `/collection` na raiz do projeto e contém todos os endpoints da API com exemplos de requisições, explicações de cada rota, e scripts de testes específicos para validar a API.
+
+## Como Importar a Coleção no Postman
+
+1. Abra o Postman.
+2. Clique em **Import** (no canto superior esquerdo).
+3. Escolha a opção **File** e selecione o arquivo `Caveo Collections.postman_collection.json` da pasta `/collection`.
+4. Clique em **Import** para adicionar a coleção ao seu workspace.
+
+## Estrutura da Coleção
+
+A coleção `Caveo Collections` contém:
+
+- **Autenticação**: Inclui exemplos de requisições para a rota `/auth`, com parâmetros necessários para autenticação e registro de usuários.
+- **Perfil do Usuário**: Rota `/me` para obter os dados do usuário autenticado, demonstrando o uso do token JWT.
+- **Atualização de Perfil**: Rota `/edit-account`, com exemplos de edição de perfil e permissões para diferentes níveis de acesso.
+- **Administração de Usuários**: Rota `/users` para listagem de usuários (exclusiva para administradores).
+
+Cada rota contém exemplos de requisições HTTP (GET, POST, PUT) com os cabeçalhos e corpos necessários. A coleção ajuda a verificar rapidamente o comportamento da API e a validação dos requisitos de negócio.
+
+## Scripts de Testes no Postman
+
+Os scripts de testes no Postman foram configurados para garantir a consistência das respostas da API e o cumprimento das regras de negócio. Abaixo estão os scripts implementados em cada uma das principais rotas:
+
+### Autenticação (`/auth`)
+
+- **Testa a Autenticação com Credenciais Válidas**: Verifica se a resposta contém um token JWT ao fornecer credenciais corretas.
+- **Testa Erro com Credenciais Inválidas**: Valida se o status de resposta é 401 quando credenciais inválidas são enviadas.
+  
+#### Script:
+```javascript
+pm.test("Token JWT está presente", function () {
+    pm.response.to.have.status(200);
+    pm.expect(pm.response.json()).to.have.property("token");
+});
+
+pm.test("Erro com credenciais inválidas", function () {
+    pm.response.to.have.status(401);
+});
+```
+
+### Perfil do Usuário (`/me`)
+
+- **Verifica Dados do Usuário**: Confirma que a rota `/me` retorna os dados corretos do usuário autenticado.
+  
+#### Script:
+```javascript
+pm.test("Dados do usuário retornados com sucesso", function () {
+    pm.response.to.have.status(200);
+    const jsonData = pm.response.json();
+    pm.expect(jsonData).to.have.property("email");
+    pm.expect(jsonData).to.have.property("role");
+});
+```
+
+### Atualização de Perfil (`/edit-account`)
+
+- **Valida Permissões de Atualização**: Verifica se o usuário comum pode alterar apenas o campo `name` e se o usuário administrador pode alterar `name` e `role`.
+- **Erro para Tentativas Inválidas de Atualização**: Confirma que a API retorna erro apropriado (403) quando um usuário tenta modificar um campo para o qual não tem permissão.
+
+#### Script:
+```javascript
+pm.test("Perfil atualizado com sucesso", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Erro de permissão", function () {
+    pm.response.to.have.status(403);
+});
+```
+
+### Administração de Usuários (`/users`)
+
+- **Valida Acesso Restrito**: Garante que somente administradores consigam acessar a listagem de usuários.
+- **Testa Conteúdo da Listagem**: Confirma que a resposta contém um array de usuários com os campos esperados.
+
+#### Script:
+```javascript
+pm.test("Acesso restrito para administradores", function () {
+    pm.response.to.have.status(200);
+    pm.expect(pm.response.json()).to.be.an("array");
+});
+
+pm.test("Erro para usuários sem permissão", function () {
+    pm.response.to.have.status(403);
+});
+```
+
+### Executando os Testes no Postman
+
+1. Após importar a coleção, expanda a coleção `Caveo Collections` no Postman.
+2. Selecione **Run** para iniciar a execução de todos os testes configurados.
+3. Visualize os resultados dos testes em cada requisição para verificar o comportamento da API.
+
+Esses scripts de testes no Postman permitem validar o fluxo de autenticação, permissões e regras de negócio de maneira automatizada e são úteis para garantir a integridade da API ao longo do desenvolvimento.
 
 ---
