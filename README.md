@@ -1,61 +1,165 @@
-# Tarefa Backend Caveo
 
-## Objetivo
+# Projeto Backend API - Autenticação e Gerenciamento de Usuários
 
-Nesta tarefa, o candidato deverá configurar um projeto backend utilizando Node.js e integrar a aplicação com AWS Cognito para controlar a autorização de rotas. A tarefa inclui a configuração de um banco de dados com PostgreSQL, o uso do ORM TypeORM, e a inicialização do ambiente de desenvolvimento com Docker Compose.
+Este projeto consiste em uma API backend desenvolvida para um teste técnico para a empresa Caveo. A API permite autenticação e gerenciamento de usuários com integração ao AWS Cognito e uso de banco de dados PostgreSQL com TypeORM, utilizando o framework Koa.js.
 
-## Requisitos
+## Sumário
 
-1. **Inicialização do Repositório**
-   - Configure um novo repositório Node.js.
-   - Utilize o framework **KoaJS**.
-   - Adicione **TypeORM** para gerenciar o banco de dados.
-   - Utilize **PostgreSQL** como banco de dados relacional.
-   - Utilize **Typescript**.
+- [Visão Geral do Projeto](#visão-geral-do-projeto)
+- [Arquitetura e Estrutura do Projeto](#arquitetura-e-estrutura-do-projeto)
+- [Dependências e Versões](#dependências-e-versões)
+- [Instalação e Configuração](#instalação-e-configuração)
+- [Configuração do AWS Cognito](#configuração-do-aws-cognito)
+- [Uso do Docker](#uso-do-docker)
+- [Regras de Negócio e Validações](#regras-de-negócio-e-validações)
+- [Documentação das Rotas](#documentação-das-rotas)
+- [Estrutura de Testes](#estrutura-de-testes)
 
-2. **Tabelas**
-   - Deverá ser criada uma tabela com o nome de `User`, com os seguintes campos: name, email, role, isOnboarded, createdAt, deletedAt, updatedAt.
+---
 
-3. **Configuração com Docker Compose**
-   - Configure um arquivo `docker-compose.yml` para inicializar a API e o banco de dados PostgreSQL.
-   - Certifique-se de que o ambiente esteja isolado e fácil de replicar.
+## Visão Geral do Projeto
 
-4. **Integração com AWS Cognito**
-   - Crie uma conta AWS, se necessário.
-   - Configure um User Pool no AWS Cognito.
-   - Integre a API com AWS Cognito para autenticação de usuários.
+Esta API foi desenvolvida para operações comuns de autenticação e gerenciamento de perfis, utilizando AWS Cognito para segurança e autenticação e integrando-se a um banco de dados PostgreSQL via TypeORM. 
 
-5. **Middleware de Autorização**
-   - Desenvolva um middleware em KoaJS para controlar a autorização das rotas.
-   - O middleware deve bloquear o acesso de usuários não autenticados.
-   - Integre a verificação do JWT gerado pelo Cognito para proteger as rotas.
+### Principais Funcionalidades
 
-6. **Escopos e Permissões**
-   - Crie diferentes escopos de usuário (por exemplo, `admin`, `usuário`) no cognito.
-   - Configure permissões específicas para cada escopo, garantindo que apenas usuários com as permissões corretas possam acessar determinadas rotas.
+- Registro de usuários e autenticação via AWS Cognito.
+- Atualização de perfis de usuário com controle de permissões.
+- Listagem de usuários para administradores.
+- Testes unitários com Jest e configuração via Docker.
 
-7. **Criação de rotas**
-   - Deve ser criadas rotas de /auth, /me, /edit-account e /users
-   - A rota `/auth` deverá ser pública, a rota /me e /edit-account devem ser protegidas pelo JWT retornado pelo Cognito
-   - A rota `/auth` servirá como um signInOrRegister, onde deverá verificar se o usuário já existe, senão criar em nosso banco de dados.
-   - Para a rota `/edit-account` os usuários com escopo de admin, poderão alterar as informações de nome e role, enquanto os usuários com escopo de usuário somente poderão alterar o seu nome, após alterar o nome, a flag de isOnboarded deve ser modificada para true.
-   - A rota `/users` deverá ser protegida e somente os usuários com escopo de admin poderão acessa-lá, essa rota retornara todos os usuários cadastrados em nosso banco.
+---
 
-8. **Documentação**
-   - Utilize Postman ou Swagger para a documentação das rotas e funcionalidades.
-   - Exemplifique os requests que serão executados na plataforma.
-   - Utilize commits pequenos e de claro entendimento.
+## Arquitetura e Estrutura do Projeto
 
-**Diferenciais**
-- Testes unitários e E2E
-- Postman com rotas de testes
-- Flow no Postman com testes aplicados
-- Env com variáveis de ambiente encriptadas
-- Aplicação funcional com link na AWS
-- Padrões de desenvolvimento aplicados (Camel Case, Snake Case, linter, etc)
+O projeto segue uma arquitetura modular com separação de responsabilidades para diferentes camadas:
 
-## Referências
+- **/src**: Contém o código-fonte.
+  - **/config**: Configurações gerais (ex: conexão com DB, integração Cognito).
+  - **/controllers**: Controladores das rotas e lógica de negócios.
+  - **/entities**: Definição das entidades para ORM.
+  - **/middleware**: Middlewares personalizados (autenticação, autorização).
+  - **/routes**: Configuração das rotas.
+  - **/services**: Lógica de negócios, incluindo integração Cognito.
+  - **/tests**: Testes unitários e de integração.
 
-- [Documentação do Docker](https://docs.docker.com/)
-- [Documentação do KoaJS](https://koajs.com/)
-- [Documentação do TypeORM](https://typeorm.io/)
+---
+
+## Dependências e Versões
+
+- **Node.js**: v20.16.0
+- **Koa.js**: Framework da API.
+- **TypeORM**: ORM para PostgreSQL.
+- **PostgreSQL**: v14.
+- **AWS Cognito SDK**: Integração com Cognito.
+- **Jest**: v28 - Framework de testes.
+- **Docker**: Configuração de ambiente.
+
+---
+
+## Instalação e Configuração
+
+1. Clone o repositório:
+   ```bash
+   git clone <repo-url>
+   cd nome-do-repositorio
+   ```
+
+2. Instale as dependências:
+   ```bash
+   npm install
+   ```
+
+3. Configure o arquivo `.env` na raiz com as seguintes variáveis:
+   ```plaintext
+   PORT=4000
+   DATABASE_HOST=db
+   DATABASE_PORT=5432
+   DATABASE_USER=user
+   DATABASE_PASSWORD=password
+   DATABASE_NAME=caveo
+   AWS_REGION=<REGIAO_AWS>
+   AWS_USER_POOL_ID=<ID_DO_USER_POOL>
+   AWS_CLIENT_ID=<ID_DO_CLIENT_APP>
+   AWS_ACCESS_KEY_ID=<CHAVE_DE_ACESSO_AWS>
+   AWS_SECRET_ACCESS_KEY=<CHAVE_SECRETA_AWS>
+   ```
+
+### Configuração do AWS Cognito
+
+1. **Crie um User Pool** no AWS Cognito e configure os fluxos de autenticação:
+
+   - **ALLOW_ADMIN_USER_PASSWORD_AUTH**
+   - **ALLOW_CUSTOM_AUTH**
+   - **ALLOW_REFRESH_TOKEN_AUTH**
+   - **ALLOW_USER_PASSWORD_AUTH**
+   - **ALLOW_USER_SRP_AUTH**
+
+   Esses fluxos permitem autenticação personalizada, autenticação com senha e uso de tokens.
+
+2. **Client Application**: Ao configurar o aplicativo cliente no Cognito, permita os fluxos de autenticação acima.
+
+3. **Atributo Personalizado `role`**: Caso necessário, adicione um atributo personalizado chamado `custom:role` para definir a função do usuário (ex: admin, user). Configure-o como "mutável". Este atributo permite controle de permissões na API.
+
+---
+
+## Uso do Docker
+
+1. Execute o Docker:
+   ```bash
+   docker-compose up --build
+   ```
+
+2. Acesse a API em `http://localhost:4000`.
+
+---
+
+## Regras de Negócio e Validações
+
+### Autenticação e Registro
+
+- **Critérios de Autenticação**: Tokens válidos emitidos pelo AWS Cognito.
+- **Registro de Usuário**: Novos usuários são confirmados automaticamente e registrados no banco.
+
+### Atualização de Perfil
+
+- **Admin**: Pode editar campos como `role` e `name`.
+- **Usuário**: Pode editar apenas o `name`.
+
+---
+
+## Documentação das Rotas
+
+### Rota: /auth
+- **Método**: POST
+- **Descrição**: Autentica um usuário ou registra um novo.
+- **Parâmetros**: `email`, `password`.
+
+### Rota: /me
+- **Método**: GET
+- **Descrição**: Retorna os dados do usuário autenticado.
+
+### Rota: /edit-account
+- **Método**: PUT
+- **Descrição**: Atualiza o perfil do usuário autenticado.
+- **Permissões**: Admin pode editar `role`, `name`; Usuário comum apenas `name`.
+
+### Rota: /users
+- **Método**: GET
+- **Descrição**: Lista todos os usuários.
+- **Permissões**: Restrito a administradores.
+
+---
+
+## Estrutura de Testes
+
+- **Jest** para testes unitários e de integração.
+
+### Comandos de Testes
+
+- Executar todos os testes:
+   ```bash
+   npm run test
+   ```
+
+---
