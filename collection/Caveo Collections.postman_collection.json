@@ -1,0 +1,356 @@
+{
+	"info": {
+		"_postman_id": "90b125fc-713e-408e-a7ac-119aecc72f7c",
+		"name": "Caveo Collections",
+		"description": "|  |  |  |\n| --- | --- | --- |\n\n  \nA coleção **Caveo Collections** contém uma série de endpoints que compõem a API da Caveo, projetada para autenticação, gerenciamento de usuários e controle de permissões. Esta API permite operações essenciais, como o registro e login de usuários, a obtenção de dados do perfil, atualização de informações pessoais e listagem de todos os usuários, com controles específicos de acesso e escopos para administradores e usuários comuns.\n\nA coleção está organizada em endpoints que fornecem funcionalidades robustas para gerenciar as informações dos usuários, facilitando o fluxo de autenticação e autorização, enquanto garante que os dados sejam manipulados de maneira segura e eficiente. Cada rota inclui validações detalhadas, retorno de status coerentes e feedback informativo, proporcionando uma interface de comunicação estável e confiável.\n\n**Estrutura da Coleção:**\n\n- **/auth (POST)**:\n    \n    - Endpoint para autenticação e registro de novos usuários.\n        \n    - Permite que novos usuários sejam registrados no sistema, e usuários existentes sejam autenticados, retornando um token JWT para autenticação contínua.\n        \n- **/me (GET)**:\n    \n    - Endpoint para obtenção de informações do usuário autenticado.\n        \n    - Retorna dados básicos do perfil do usuário, com base no token de autenticação JWT fornecido.\n        \n- **/edit-account (PUT)**:\n    \n    - Endpoint para atualização de informações do usuário.\n        \n    - Usuários comuns podem alterar seu próprio nome, enquanto administradores podem editar o nome, a role e o email de outros usuários. A atualização de informações marca o usuário como onboarded, indicando que ele completou as atualizações iniciais de perfil.\n        \n- **/users (GET)**:\n    \n    - Endpoint para listagem de todos os usuários (acesso restrito a administradores).\n        \n    - Retorna uma lista completa de todos os usuários cadastrados no sistema, incluindo informações básicas de perfil, disponível apenas para usuários com permissões de administrador.\n        \n\n**Funcionalidades e Segurança:**  \nA API utiliza o AWS Cognito para gerenciar autenticação e autorização, com um esquema de tokens JWT para validar e proteger o acesso às rotas. Cada endpoint está protegido por um middleware que verifica o token e garante que somente usuários autorizados possam acessar ou modificar os dados, de acordo com seus privilégios.\n\n**Notas Importantes:**\n\n- A segurança dos dados dos usuários é garantida através de verificações de token em cada requisição.\n    \n- As operações de alteração de `role` só são permitidas para administradores.\n    \n- Variáveis de ambiente, como o token de autenticação (`authToken`), são configuradas automaticamente para facilitar o uso nas chamadas subsequentes.\n    \n\n**Como Usar:**  \nPara começar, use o endpoint `/auth` para autenticar-se e obter o token JWT, que deve ser usado nas requisições subsequentes. O token será salvo automaticamente nas variáveis de ambiente do Postman e será incluído nas requisições da coleção para manter uma experiência de uso integrada e segura.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34609249",
+		"_collection_link": "https://www.postman.com/telecoms-pilot-97242216/workspace/caveo-api/collection/34609249-90b125fc-713e-408e-a7ac-119aecc72f7c?action=share&source=collection_link&creator=34609249"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "/auth",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", function () {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Response contains token\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"token\");",
+									"    pm.environment.set(\"authToken\", jsonData.token); ",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"teste48@example.com\",\n  \"password\": \"Password@123\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:4000/auth",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "4000",
+							"path": [
+								"auth"
+							]
+						},
+						"description": "### Rota **POST /auth**\n\n- **Descrição**: Esta rota autentica ou registra um usuário no sistema. Se o usuário já existe, ele é autenticado e recebe um token JWT para acesso às rotas protegidas. Se o usuário não existe, ele é registrado no Cognito, confirmado automaticamente, e um token JWT é retornado para acesso imediato.\n    \n- **Critérios de Senha**:\n    \n    - A senha deve conter no mínimo 8 caracteres.\n        \n    - Deve incluir ao menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.\n        \n- **Possíveis Respostas**:\n    \n    - **200 OK**: O usuário foi autenticado ou registrado com sucesso\n        \n        - {  \n            \"token\": \"JWT_TOKEN_HERE\"  \n            }\n            \n    - **400 Bad Request**: O email ou senha não foram fornecidos.\n        \n        - {  \n            \"message\": \"Email e senha são obrigatórios\"  \n            }\n            \n    - **401 Unauthorized**: Credenciais inválidas, senha incorreta ou critérios de senha não atendidos.\n        \n        - {  \n            \"message\": \"Credenciais inválidas. Verifique seu e-mail e senha.\"  \n            }\n            \n    - **500 Internal Server Error**: Ocorreu um erro interno durante a autenticação ou registro do usuário.\n        \n\n**Body de Exemplo para Requisição**:\n\n``` json\n{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123@\"\n}\n\n ```\n\n**Testes:**\n\n1. **Verificação do Código de Status**: Garante que a resposta tenha o status `200 OK`.\n    \n2. **Formato da Resposta**: Verifica se a resposta está em formato JSON.\n    \n3. **Presença do Token**: Checa se a resposta contém um `token`.\n    \n4. **Configuração de Variável de Ambiente**: Salva o `token` em uma variável de ambiente para uso em outras rotas."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "user",
+			"item": []
+		},
+		{
+			"name": "/auth",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response is JSON\", function () {",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Response contains token\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property(\"token\");",
+							"    pm.environment.set(\"authToken\", jsonData.token); ",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"teste48@example.com\",\n  \"password\": \"Password@123\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:4000/auth",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"auth"
+					]
+				},
+				"description": "### Rota **POST /auth**\n\n- **Descrição**: Esta rota autentica ou registra um usuário no sistema. Se o usuário já existe, ele é autenticado e recebe um token JWT para acesso às rotas protegidas. Se o usuário não existe, ele é registrado no Cognito, confirmado automaticamente, e um token JWT é retornado para acesso imediato.\n    \n- **Critérios de Senha**:\n    \n    - A senha deve conter no mínimo 8 caracteres.\n        \n    - Deve incluir ao menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.\n        \n- **Possíveis Respostas**:\n    \n    - **200 OK**: O usuário foi autenticado ou registrado com sucesso\n        \n        - {  \n            \"token\": \"JWT_TOKEN_HERE\"  \n            }\n            \n    - **400 Bad Request**: O email ou senha não foram fornecidos.\n        \n        - {  \n            \"message\": \"Email e senha são obrigatórios\"  \n            }\n            \n    - **401 Unauthorized**: Credenciais inválidas, senha incorreta ou critérios de senha não atendidos.\n        \n        - {  \n            \"message\": \"Credenciais inválidas. Verifique seu e-mail e senha.\"  \n            }\n            \n    - **500 Internal Server Error**: Ocorreu um erro interno durante a autenticação ou registro do usuário.\n        \n\n**Body de Exemplo para Requisição**:\n\n``` json\n{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123@\"\n}\n\n ```\n\n**Testes:**\n\n1. **Verificação do Código de Status**: Garante que a resposta tenha o status `200 OK`.\n    \n2. **Formato da Resposta**: Verifica se a resposta está em formato JSON.\n    \n3. **Presença do Token**: Checa se a resposta contém um `token`.\n    \n4. **Configuração de Variável de Ambiente**: Salva o `token` em uma variável de ambiente para uso em outras rotas."
+			},
+			"response": []
+		},
+		{
+			"name": "/me",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (!pm.environment.get(\"authToken\")) {",
+							"    console.error(\"Auth token is missing. Make sure to set it in the environment variables.\");",
+							"} else {",
+							"    pm.request.headers.add({",
+							"        key: \"Authorization\",",
+							"        value: `Bearer ${pm.environment.get(\"authToken\")}`",
+							"    });",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response is JSON\", function () {",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Response contains user data\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property(\"id\");",
+							"    pm.expect(jsonData).to.have.property(\"name\");",
+							"    pm.expect(jsonData).to.have.property(\"email\");",
+							"    pm.expect(jsonData).to.have.property(\"role\");",
+							"    pm.expect(jsonData).to.have.property(\"isOnboarded\");",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJQNmhKV2RGQVYwSUYzSTg1QzZRQ2VFWXlcL2ZqY01ZXC9iWHdJNmJHNWNMNmM9IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiIwMzljM2FmYS1jMDAxLTcwOGItZjAyYi0xOWU1NDE3MzM0ZTQiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC5zYS1lYXN0LTEuYW1hem9uYXdzLmNvbVwvc2EtZWFzdC0xX2pIajlTalBUVSIsImNvZ25pdG86dXNlcm5hbWUiOiIwMzljM2FmYS1jMDAxLTcwOGItZjAyYi0xOWU1NDE3MzM0ZTQiLCJvcmlnaW5fanRpIjoiZjY4M2IzNDEtODAzZS00ZGZjLWJiYTQtMDM0MDg1OGNmNWYxIiwiYXVkIjoiNWhtZzJyMjZydDlubW9jMzhtZjVqMmhnaDAiLCJldmVudF9pZCI6IjBkN2MyZWU0LWJjODItNDQ5MS1iYzE1LTUwMGZkMTg1MWVlMyIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNzMwNDMyMTgyLCJleHAiOjE3MzA0MzU3ODIsImN1c3RvbTpyb2xlIjoidXNlciIsImlhdCI6MTczMDQzMjE4MiwianRpIjoiMWM1MDUyYjItZTk3Ni00ZWQ0LWEwNGQtYWM2ZDY5NGQyMzdmIiwiZW1haWwiOiJ0ZXN0ZTQ4QGV4YW1wbGUuY29tIn0.I1T4Xe5vZfmyaqtdQNAebWw7C5s1ebW332evRhGdT4e8SQa8LUwh7lFaxzUhWDtYIcbEWxnAjFAfbTD009A3rT5RBFhovpf4tNxBCcj1iZohnu9yGTXfmouPLRTtXx-RmK8Ug1mNuJogHOs2MDM_8_llj8TCRNFyoCfH7oRXut2smDQwILxo8fPaJJd_ajRJxwhwFSafyhyhu3Cd3R0DX8bWDYggnp6StNIBueOGuh2CuwGfR_j1PkTkzNC5DPBcw3Kj3HayyM_6bbVsaYgEqJPlfyMFB7ujT68Kw6Z1XPUnn5BfF51SUYc7NN33_pTKDm9zbo2oWDHLVxACWIQLUA",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://localhost:4000/me",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"me"
+					]
+				},
+				"description": "### Rota **GET /me**\n\n- **Descrição**: Esta rota retorna os dados do usuário autenticado. Requer um token JWT válido no cabeçalho `Authorization`. Ideal para verificar informações do perfil do usuário logado.\n    \n\n- **Cabeçalho Necessário**:\n    \n    - `Authorization: Bearer`\n        \n\n- **Possíveis Respostas**:\n    \n    - **200 OK**: Retorna os dados do usuário autenticado.\n        \n        - {  \n            \"id\": \"user-id\",  \n            \"name\": \"User Name\",  \n            \"email\": \"[user@example.com](https://mailto:user@example.com)\",  \n            \"role\": \"user\",  \n            \"isOnboarded\": true,  \n            \"createdAt\": \"2024-01-01T00:00:00Z\",  \n            \"updatedAt\": \"2024-01-01T00:00:00Z\",  \n            \"deletedAt\": null  \n            }\n            \n    - **401 Unauthorized**: Token inválido ou não fornecido.\n        \n        - {  \n            \"message\": \"Usuário não autenticado\"  \n            }\n            \n    - **500 Internal Server Error**: Ocorreu um erro interno ao buscar os dados do usuário.\n        \n\n**Testes:**\n\n1. **Verificação do Código de Status**: Garante que a resposta tenha o status `200 OK`.\n    \n2. **Formato da Resposta**: Verifica se a resposta está em formato JSON.\n    \n3. **Validação dos Dados do Usuário**:\n    \n    - Verifica se a resposta inclui os campos `id`, `name`, `email`, `role` e `isOnboarded`, que são necessários para o perfil do usuário."
+			},
+			"response": []
+		},
+		{
+			"name": "/edit-account",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"if (!pm.environment.get(\"authToken\")) {",
+							"    console.error(\"Auth token is missing. Make sure to set it in the environment variables.\");",
+							"} else {",
+							"    pm.request.headers.add({",
+							"        key: \"Authorization\",",
+							"        value: `Bearer ${pm.environment.get(\"authToken\")}`",
+							"    });",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response is JSON\", function () {",
+							"    pm.response.to.be.json;",
+							"});",
+							"",
+							"pm.test(\"Response has success message and updated user data\", function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property(\"message\", \"Dados atualizados com sucesso\");",
+							"    pm.expect(jsonData).to.have.property(\"user\");",
+							"    pm.expect(jsonData.user).to.have.property(\"id\");",
+							"    pm.expect(jsonData.user).to.have.property(\"name\");",
+							"    pm.expect(jsonData.user).to.have.property(\"email\");",
+							"    pm.expect(jsonData.user).to.have.property(\"role\");",
+							"    pm.expect(jsonData.user).to.have.property(\"isOnboarded\");",
+							"});",
+							"",
+							"if (pm.environment.get(\"userRole\") === \"admin\") {",
+							"    pm.test(\"Admin can update role\", function () {",
+							"        const jsonData = pm.response.json();",
+							"        pm.expect(jsonData.user.role).to.eql(\"newRoleValue\"); ",
+							"    });",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJQNmhKV2RGQVYwSUYzSTg1QzZRQ2VFWXlcL2ZqY01ZXC9iWHdJNmJHNWNMNmM9IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiIwMzljM2FmYS1jMDAxLTcwOGItZjAyYi0xOWU1NDE3MzM0ZTQiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC5zYS1lYXN0LTEuYW1hem9uYXdzLmNvbVwvc2EtZWFzdC0xX2pIajlTalBUVSIsImNvZ25pdG86dXNlcm5hbWUiOiIwMzljM2FmYS1jMDAxLTcwOGItZjAyYi0xOWU1NDE3MzM0ZTQiLCJvcmlnaW5fanRpIjoiZGM4ZDcyODgtODIzMC00MDdiLTgwNzMtZmYwZGUyN2UwYzg2IiwiYXVkIjoiNWhtZzJyMjZydDlubW9jMzhtZjVqMmhnaDAiLCJldmVudF9pZCI6ImNlMDdlYmQ4LWQ2N2MtNGQxMS1iMDMzLTgyOWZiMDg2NGI5NiIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNzMwNDMyMTU4LCJleHAiOjE3MzA0MzU3NTgsImN1c3RvbTpyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzA0MzIxNTgsImp0aSI6IjM1YzQ3NmM4LWVkZWQtNDZlMy1iMzgwLTUwMDhhYzIxYjRkZSIsImVtYWlsIjoidGVzdGU0OEBleGFtcGxlLmNvbSJ9.U2XxuW-Z69VZXyHtHH0J-vHhx4TL1KTYhXSrQDJ6wpBMsfOoHnVTPNsLWHETVqvzDqeywsLgo32CFMdw1bSHUun3NcEj9xnYpVdaRdgb3hczyzEYHw92ocpLn9ds7ATNVP4JD80NJfFByllRfU_yvw1P7093jJoYEs0OAp7L8BbNZL5KdqIU22FHyAw5ilNKY1M-Iwn35veNeKx5Ch7zXSMmqPOPjrkb6z6T4MbqspBeddFeD8_mKLPyZLvoFLSMH7EePnnLLiC_HCuHzxDxGM7Wr_DDni3ZeV30mX9_bAUL2mLArPpGSOsQVxAa-dlxkVrZqAjF-yzdNxBtt-NDXA",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\n  \"role\": \"user\",\n  \"name\": \"Ts\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:4000/edit-account",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"edit-account"
+					]
+				},
+				"description": "### Rota **PUT /edit-account**\n\n- **Descrição**: Esta rota permite que o usuário atualize suas informações de perfil. As permissões para atualização dependem do nível de acesso do usuário:\n    \n    - **Usuário Admin**: Pode atualizar tanto o `name` quanto o `role` de qualquer usuário, fornecendo o `email` do usuário-alvo no corpo da requisição. Assim, se o admin passar o `email` de outro usuário junto com um novo `role`, essa alteração será aplicada ao usuário correspondente ao `email` passado, e **não** ao próprio admin. Se o `email` não for especificado, a atualização será feita nos dados do próprio admin.\n        \n    - **Usuário Comum**: Pode atualizar apenas o próprio `name`. Além disso, qualquer alteração feita por um usuário comum definirá automaticamente a flag `isOnboarded` como `true`, indicando que o usuário completou uma atualização em seu perfil.\n        \n- **Cabeçalho Necessário**:\n    \n    - `Authorization: Bearer`\n        \n- **Body de Exemplo para Requisição**:\n    \n    - Para um **usuário admin**\n        \n        - {  \n            \"email\": \"[user@example.com](https://mailto:user@example.com)\", // Filtro por e-mail de outro usuário  \n            \"name\": \"Updated Name\",  \n            \"role\": \"admin\"  \n            }\n            \n    - Para um **usuário comum**:\n        \n        - {  \n            \"name\": \"Updated Name\"  \n            }\n            \n- **Possíveis Respostas**:\n    \n    - **200 OK**: Os dados foram atualizados com sucesso.\n        \n        - {  \n            \"message\": \"Dados atualizados com sucesso\",  \n            \"user\": {  \n            \"id\": \"user-id\",  \n            \"name\": \"Updated Name\",  \n            \"email\": \"[user@example.com](https://mailto:user@example.com)\",  \n            \"role\": \"admin\",  \n            \"isOnboarded\": true,  \n            \"createdAt\": \"2024-01-01T00:00:00Z\",  \n            \"updatedAt\": \"2024-01-01T00:00:00Z\",  \n            \"deletedAt\": null  \n            }  \n            }\n            \n    - **401 Unauthorized**: Token inválido ou não fornecido.\n        \n        - {  \n            \"message\": \"Usuário não autenticado\"  \n            }\n            \n    - **403 Forbidden**: O usuário atual não tem permissão para editar a role.\n        \n        - {  \n            \"message\": \"Permissão insuficiente para alterar o role\"  \n            }\n            \n    - **404 Not Found**: O usuário não foi encontrado no banco de dados.\n        \n        - {  \n            \"message\": \"Usuário não encontrado\"  \n            }\n            \n\n**Testes:**\n\n1. **Verificação do Código de Status**: Garante que a resposta tenha o status `200 OK`.\n    \n2. **Formato da Resposta**: Verifica se a resposta está em formato JSON.\n    \n3. **Verificação da Mensagem de Sucesso**: Checa se a resposta contém o campo `message` com o texto \"Dados atualizados com sucesso\".\n    \n4. **Validação dos Dados do Usuário Atualizado**:\n    \n    - Verifica a presença dos campos `id`, `name`, `email`, `role` e `isOnboarded` no objeto `user` da resposta.\n        \n5. **Validação de Atualização de Role (apenas para Admin)**: Confirma que administradores podem atualizar o `role` de outros usuários, verificando se o `role` atualizado corresponde ao valor esperado."
+			},
+			"response": []
+		},
+		{
+			"name": "/users",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJraWQiOiJQNmhKV2RGQVYwSUYzSTg1QzZRQ2VFWXlcL2ZqY01ZXC9iWHdJNmJHNWNMNmM9IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiIwMzljM2FmYS1jMDAxLTcwOGItZjAyYi0xOWU1NDE3MzM0ZTQiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC5zYS1lYXN0LTEuYW1hem9uYXdzLmNvbVwvc2EtZWFzdC0xX2pIajlTalBUVSIsImNvZ25pdG86dXNlcm5hbWUiOiIwMzljM2FmYS1jMDAxLTcwOGItZjAyYi0xOWU1NDE3MzM0ZTQiLCJvcmlnaW5fanRpIjoiY2QwNjU4ODQtMmE3Ni00OGY3LThiMzUtZWIzNDIxNzY4YjkyIiwiYXVkIjoiNWhtZzJyMjZydDlubW9jMzhtZjVqMmhnaDAiLCJldmVudF9pZCI6IjAwMWViYTk0LTQwMTgtNGI4NS05ZTYzLTY0ZDJlODAzMzFkNyIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNzMwNDMyMDkxLCJleHAiOjE3MzA0MzU2OTEsImN1c3RvbTpyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzA0MzIwOTEsImp0aSI6IjMwZjlhNjQwLWNkODgtNDU4YS04NDQ2LTcyMzYwZGMyNjRmNCIsImVtYWlsIjoidGVzdGU0OEBleGFtcGxlLmNvbSJ9.Fcts4QQwwZoJ3keW0-7IV-qDNozU5uIIJ725kzdJFiN6iMDhAZRm7VaaAtik6kUv7xo2x1hdBCbL35bon3s-YkfacVIGN8toQZMYIWX72TiHoUzPa3qAMi18PkC6yHdhtvjCoapuhhTZo5C9yvj5IvQONkpxmV0nodz4dMY9lYl8dCKsCJBLMnNqvTcHwj8QA54d07bqR71PKyBsdRcoS7IL4e3h06W1nQM7dRVO6aqDwPIRoQ8Hah9j25CCtVex2korxe8dLmNe1YfSYVA1WWhuh5g-YstV6FwXHcrzgEUaL9uxCogM9Ny1ZfbtcXNleHIxaQg6iYdLzb8oJUtcqA",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:4000/users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "4000",
+					"path": [
+						"users"
+					]
+				},
+				"description": "### Rota **GET /users**\n\n- **Descrição**: Esta rota retorna uma lista de todos os usuários cadastrados, mas está disponível apenas para administradores. Útil para gerenciar o acesso e visualizar todos os perfis cadastrados.\n    \n- **Cabeçalho Necessário**:\n    \n    - `Authorization: Bearer`\n        \n- **Possíveis Respostas**:\n    \n    - **200 OK**: Retorna a lista de todos os usuários.\n        \n        - \\[  \n            {  \n            \"id\": \"user-id-1\",  \n            \"name\": \"User One\",  \n            \"email\": \"[user1@example.com](https://mailto:user1@example.com)\",  \n            \"role\": \"user\",  \n            \"isOnboarded\": true,  \n            \"createdAt\": \"2024-01-01T00:00:00Z\",  \n            \"updatedAt\": \"2024-01-01T00:00:00Z\",  \n            \"deletedAt\": null  \n            },  \n            {  \n            \"id\": \"user-id-2\",  \n            \"name\": \"User Two\",  \n            \"email\": \"[user2@example.com](https://mailto:user2@example.com)\",  \n            \"role\": \"admin\",  \n            \"isOnboarded\": false,  \n            \"createdAt\": \"2024-01-01T00:00:00Z\",  \n            \"updatedAt\": \"2024-01-01T00:00:00Z\",  \n            \"deletedAt\": null  \n            }  \n            \\]\n            \n    - **401 Unauthorized**: Token inválido ou não fornecido.\n        \n        - {  \n            \"message\": \"Usuário não autenticado\"  \n            }\n            \n    - **403 Forbidden**: O usuário atual não tem permissão para editar o `role`.\n        \n        - {  \n            \"message\": \"Permissão insuficiente para alterar o role\"  \n            }\n            \n    - **404 Not Found**: O usuário especificado pelo `email` não foi encontrado no banco de dados.\n        \n        - {  \n            \"message\": \"Usuário não encontrado\"  \n            }\n            \n\n**Testes:**\n\n1. **Verificação do Código de Status**: Garante que a resposta tenha o status `200 OK`.\n    \n2. **Formato da Resposta**: Verifica se a resposta está em formato JSON.\n    \n3. **Validação do Array de Usuários**: Confirma que a resposta contém um array chamado `users`.\n    \n4. **Validação dos Campos de Cada Usuário**: Verifica cada usuário no array `users` para garantir que contenham os campos `id`, `name`, `email` e `role`."
+			},
+			"response": []
+		}
+	]
+}
